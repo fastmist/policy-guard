@@ -135,4 +135,5 @@ What each layer contributes:
 ---
 
 Reference narrative: `doc/AWARD_PITCH.md`  
-Hackathon rules context: https://hcni4f4mdq79.feishu.cn/wiki/LVzIwMpmKixXeHkeQQ0c8sn8nWg
+Hackathon rules reference in repo: `doc/HACKATHON_RULES.md`  
+Official rules link: https://hcni4f4mdq79.feishu.cn/wiki/LVzIwMpmKixXeHkeQQ0c8sn8nWg
