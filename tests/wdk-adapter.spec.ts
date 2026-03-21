@@ -481,7 +481,7 @@ describe("wdk adapter scaffold", () => {
     expect(out.ok).toBe(false);
     expect(out.details.errorCategory).toBe("GAS");
     expect(out.details.retryable).toBe(true);
-    expect(out.details.nextStep).toContain("Gas/baseFee 异常");
+    expect(out.details.nextStep).toContain("Gas/baseFee issue detected");
     expect(out.details.retryAdvice).toEqual(expect.arrayContaining([expect.stringContaining("swapMaxFee")]));
   });
 

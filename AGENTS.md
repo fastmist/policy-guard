@@ -23,7 +23,7 @@ Core files:
 This repo is driven by cron job `6b8e2fcd-1ccb-4ac8-b8dc-118cdcaf4779` (`policyguard-implementation-pusher-5m`).
 
 The cron job has previously timed out when the agent did one or more of these:
-- repeated whole-repo document巡检 instead of implementing the next TODO
+- repeated whole-repo document review instead of implementing the next TODO
 - reran `build/test/validate` every round even when only one small area changed
 - appended duplicate snapshots to `PROGRESS.md`, `REFLECTIONS.md`, and `DELIVERY_SPEC.md`
 - tried to do multiple TODO items in one turn

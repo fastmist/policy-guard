@@ -2,23 +2,20 @@ import { createHash } from "node:crypto";
 import type { ParsedIntent } from "./types.js";
 
 const NON_FUNDS_PATTERNS: Array<{ name: string; re: RegExp }> = [
-  { name: "check_balance", re: /\b(balance|余额|持仓|资产)\b/i },
-  { name: "view_price", re: /\b(price|报价|价格|行情)\b/i },
-  { name: "view_history", re: /\b(history|记录|历史|交易记录)\b/i },
-  { name: "address_lookup", re: /\b(address|地址|账户)\b/i },
+  { name: "check_balance", re: /\b(balance|holding|portfolio|asset)\b/i },
+  { name: "view_price", re: /\b(price|quote|market)\b/i },
+  { name: "view_history", re: /\b(history|record|transactions?)\b/i },
+  { name: "address_lookup", re: /\b(address|account|wallet)\b/i },
 ];
 
 const FUNDS_PATTERNS: Array<{ name: string; re: RegExp }> = [
-  { name: "transfer", re: /\b(transfer|send|withdraw|转账|提现)\b/i },
-  { name: "swap", re: /\b(swap|兑换|换币)\b/i },
-  { name: "bridge", re: /\b(bridge|跨链)\b/i },
-  { name: "approve", re: /\b(approve|授权)\b/i },
+  { name: "transfer", re: /\b(transfer|send|withdraw)\b/i },
+  { name: "swap", re: /\b(swap|exchange)\b/i },
+  { name: "bridge", re: /\b(bridge)\b/i },
+  { name: "approve", re: /\b(approve|allowance)\b/i },
 ];
 
 function extractSwapEntities(input: string): Record<string, string | number | boolean> {
-  // Examples:
-  // "swap 1 usdc to usdt"
-  // "swap 0.1 weth for usdc"
   const m = input.match(/swap\s+([0-9]+(?:\.[0-9]+)?)\s+([a-zA-Z0-9_]+)\s+(?:to|for)\s+([a-zA-Z0-9_]+)/i);
   if (!m) return {};
   return {
@@ -35,11 +32,7 @@ function normalizeTransferToken(raw?: string): string {
 }
 
 function extractTransferEntities(input: string): Record<string, string | number | boolean> {
-  // Examples:
-  // "transfer 1U to 0x..."
-  // "transfer 1 usdt to 0x..."
-  // "send 0.02 eth to 0x..."
-  const compact = input.match(/(?:transfer|send|withdraw|转账|提现)\s+([0-9]+(?:\.[0-9]+)?)([a-zA-Z]+)?\s+to\s+(0x[a-fA-F0-9]{40})/i);
+  const compact = input.match(/(?:transfer|send|withdraw)\s+([0-9]+(?:\.[0-9]+)?)([a-zA-Z]+)?\s+to\s+(0x[a-fA-F0-9]{40})/i);
   if (compact) {
     return {
       amount: compact[1],
@@ -48,7 +41,7 @@ function extractTransferEntities(input: string): Record<string, string | number 
     };
   }
 
-  const spaced = input.match(/(?:transfer|send|withdraw|转账|提现)\s+([0-9]+(?:\.[0-9]+)?)\s+([a-zA-Z0-9_]+)?\s*(?:to|给)\s*(0x[a-fA-F0-9]{40})/i);
+  const spaced = input.match(/(?:transfer|send|withdraw)\s+([0-9]+(?:\.[0-9]+)?)\s+([a-zA-Z0-9_]+)?\s*(?:to)\s*(0x[a-fA-F0-9]{40})/i);
   if (spaced) {
     return {
       amount: spaced[1],

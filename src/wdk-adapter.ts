@@ -930,11 +930,11 @@ type SwapFailureFallback = {
 function buildSwapFailureFallback(errorCategory: SwapExecutionErrorCategory): SwapFailureFallback {
   if (errorCategory === "GAS") {
     return {
-      nextStep: "Gas/baseFee 异常：建议等待 15-30 秒后重试；若持续失败，调高 swapMaxFee 或更换 RPC 节点。",
+      nextStep: "Gas/baseFee issue detected: retry in 15-30s; if it persists, increase swapMaxFee or switch RPC.",
       retryAdvice: [
-        "自动重试建议：15-30 秒后再次提交一次 approve/swap。",
-        "若报错包含 baseFee/fee cap：将 swapMaxFee 上调后重试。",
-        "若同一节点连续 2 次失败：切换 rpcUrl 后再试。",
+        "Auto-retry: submit approve/swap once after 15-30 seconds.",
+        "If the error mentions baseFee/fee cap: increase swapMaxFee and retry.",
+        "If the same RPC node fails twice in a row: switch rpcUrl and retry.",
       ],
       retryable: true,
     };

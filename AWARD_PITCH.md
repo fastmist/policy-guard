@@ -1,74 +1,73 @@
-# AWARD_PITCH.md（拿奖版路演稿/评审叙事）
+# AWARD_PITCH.md (Judge Narrative, 3-Minute Version)
 
-> 目标：让评委 3 分钟理解“问题→方案→亮点→证据→风控→可扩展”，并相信你们确实跑通了链上真实交易。
+Goal: make judges understand **Problem → Solution → Technical Highlights → Verifiable Evidence → Risk Controls → Extensibility** in under 3 minutes, and trust that real on-chain execution is possible.
 
-## 1. Problem（痛点）
-在 AI Agent 驱动的钱包/交易场景中，**最危险的不是“模型不聪明”，而是“模型可以直接动钱”**：
-- 一句话误解导致转账/换币
-- Prompt 注入/社工诱导
-- 误操作/重复执行
-- 线上可观测性不足，无法审计与复盘
+## 1) Problem
+In AI-agent wallets, the biggest risk is not model quality—it is direct fund movement without deterministic guardrails.
 
-## 2. Solution（方案）
-PolicyGuard：给 OpenClaw 增加 **Deterministic Policy + Human-in-the-loop 审批** 的安全护栏。
-- 非资金操作：PASS（可直接执行或返回结果）
-- 资金相关操作：CHALLENGE（生成 challengeId）
-- `/approve <id>`：才允许执行真实 swap/交易，并输出 `txHash`
-- `/reject <id>`：拒绝并持久化记录
+Common failure modes:
+- Misunderstood user intent triggers a transfer/swap
+- Prompt injection or social engineering requests money movement
+- Duplicate approvals / repeated execution
+- Weak auditability after incidents
 
-## 3. Key Innovations（技术亮点）
-1) **确定性策略引擎（Deterministic Policy Engine）**
-- 不依赖 LLM 的不确定性，资金类默认强制审批
+## 2) Solution
+**PolicyGuard** adds a deterministic security layer to OpenClaw:
+- Non-funds intents → `PASS`
+- Funds intents (transfer/swap/bridge/approve) → `CHALLENGE`
+- `/approve <challengeId>` is required before execution
+- `/reject <challengeId>` terminates the request with persistent audit state
 
-2) **可审计的挑战单持久化**
-- challenge 以 JSON 原子写入（tmp+rename），可追踪状态机
+## 3) Technical Highlights (Expanded)
+1. **Deterministic Policy Engine (LLM-independent decision boundary)**
+   - Hard, predictable PASS/CHALLENGE logic for funds operations
+   - Stable request fingerprint (`requestId`) for idempotency and traceability
 
-3) **幂等保护（防重复扣款）**
-- 同一 challenge 仅允许 `PENDING -> APPROVED` 一次迁移，重复 `/approve` 被拒绝
+2. **Challenge State Machine + Durable Persistence**
+   - Atomic JSON writes (tmp + rename)
+   - Explicit lifecycle: `PENDING -> APPROVED/REJECTED`
 
-4) **错误分类与可观测性**
-- RPC / allowance / gas / balance / timeout 分类，便于演示与故障定位
+3. **Strong Idempotency Safety**
+   - Duplicate `/approve` on non-PENDING challenge is blocked
+   - Prevents accidental double execution
 
-5) **WDK 本地执行（自托管）**
-- seed 仅从环境变量读取，禁止配置文件明文
-- swap 输出真实链上 `txHash`
+4. **Execution Adapter with Structured Error Taxonomy**
+   - Categorizes failures into RPC / ALLOWANCE / GAS / BALANCE / TIMEOUT / UNKNOWN
+   - Returns deterministic next-step guidance for operations
 
-## 4. Evidence（可验证证据）
-- 主网实证（Arbitrum One）：
-  - txHash: `0x0e623b3813b68f06db589b50444d7b3dfbdaf9310033672af555425816b4468d`
-  - status: 1
-  - gasUsed: 152886
+5. **Local WDK Execution Path (Self-hosted control)**
+   - Seed loaded from env var only (never plaintext config)
+   - Real execution path returns `txHash` when successfully sent
 
-## 5. Demo Script（3分钟演示脚本）
-1) `/policy check my usdt balance` → PASS
-2) `/policy swap 0.05 usdc to usdt` → CHALLENGE（返回 challengeId）
-3) `/approve <challengeId> demo` → 返回 `txHash`
-4) 打开浏览器区块浏览器，展示交易成功
+6. **Security-by-Construction Config Validation**
+   - Hard-fails startup if seed-like plaintext keys appear in config
+   - Prevents silent insecure deployments
 
-## 6. Risk Controls（风控与边界）
-- 资金类一律 challenge
-- seed 不落盘，配置中出现 seed-like 字段直接拒绝启动
-- 幂等保护避免重复执行
-- 迁移告警避免旧配置静默失效
+7. **Tested Command Flow Under CI-like Checks**
+   - Build + unit tests + validation script
+   - Transfer and swap parsing/execution paths covered by tests
 
-## 7. What’s Next（下一步）
-- 引入更强意图解析（LLM 仅用于解释与建议，策略仍 deterministic）
-- RBAC / 审计签名链
-- 更丰富的 swap 参数与多协议扩展
-- 演示材料自动化（tx证据聚合、截图、讲解稿）
+## 4) Verifiable Evidence (What judges can verify)
+- Deterministic challenge generation for funds intents
+- Approval-gated execution path
+- Structured execution output with `txHash` (when on-chain execution succeeds)
+- Persistent challenge records in `data/pending-challenges.json`
 
-## Sources（内部文件）
-- `TODO.md`
-- `DELIVERY_SPEC.md`
-- `README.md`
-- `REFLECTIONS.md`
-- `src/policy-engine.ts` `src/commands.ts` `src/wdk-adapter.ts`
+## 5) Risk Controls
+- Funds intents default to challenge, never auto-execute by default
+- Seed material is not persisted in repo config
+- Idempotent approval flow blocks duplicate fund operations
+- Error classification improves incident handling and postmortems
 
-## Sources（外部）
-- WDK 文档：https://docs.wallet.tether.io
-- `@tetherto/wdk-protocol-swap-velora-evm` README（node_modules）
+## 6) Extensibility
+- Add RBAC for approvers and policy scopes
+- Add signature-backed audit trail
+- Expand protocol modules (additional swap/bridge providers)
+- Add richer intent extraction while keeping deterministic policy enforcement
 
-***
+## External Rule / Context Reference
+- Hackathon rules context (provided by organizer):
+  - https://hcni4f4mdq79.feishu.cn/wiki/LVzIwMpmKixXeHkeQQ0c8sn8nWg
 
-(评审一句话版本)
-> 我们把“AI 能不能交易”变成“AI 只能提议交易，钱必须过 deterministic policy + 人审”，并且展示了真实上链 txHash。 
+## One-line pitch
+> PolicyGuard turns “AI can move money” into “AI can propose, policy must challenge, humans must approve”—with verifiable execution artifacts and production-grade safety boundaries.
