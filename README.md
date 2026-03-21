@@ -1,7 +1,4 @@
-# PolicyGuard OpenClaw Plugin
-
-## Overview
-PolicyGuard is a deterministic safety layer that turns AI wallet actions from **direct execution** into **policy-gated, human-approved execution** on top of OpenClaw + WDK.
+# PolicyGuard = WDK safety layer for OpenClaw
 
 ## Problem
 In AI-agent trading/wallet workflows, the core risk is not model intelligence but uncontrolled fund operations.
