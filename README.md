@@ -10,8 +10,11 @@ PolicyGuard is an OpenClaw security plugin that enforces a deterministic approva
 ## Quickstart (one command)
 
 ```bash
-npx openclaw@latest plugins add /root/.openclaw/extensions/policyguard-openclaw-plugin
+openclaw plugins install policyguard-openclaw-plugin
 ```
+
+`openclaw plugins install policyguard-openclaw-plugin@0.1.0` also works, but version is optional.
+If no version is specified, OpenClaw installs the package from the `latest` npm tag.
 
 Then set plugin config + environment, and restart/reload OpenClaw runtime as needed.
 
