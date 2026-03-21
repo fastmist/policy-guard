@@ -28,9 +28,21 @@ export type ChallengeRecord = {
   policy: PolicyEvaluation;
 };
 
+export type AutoApprovalPolicy = {
+  maxAutoPerTx: number;
+  maxAutoPerDay: number;
+  enabled: boolean;
+  updatedAt: string;
+};
+
 export type PendingStore = {
   version: 1;
   challenges: ChallengeRecord[];
+  autoApprovalPolicy?: AutoApprovalPolicy;
+  dailySpent?: {
+    date: string;
+    amount: number;
+  };
 };
 
 export type WdkExecutionResult = {

@@ -1,25 +1,21 @@
-export function getDemoRunbook(): string {
+export function buildDemoRunbook(input?: { mockTxHash?: string }): string {
+  const mockTxHash = input?.mockTxHash ?? "0xmocktx";
   const lines = [
-    "# PolicyGuard Demo Runbook",
+    "# PolicyGuard 3-Minute Demo Runbook",
     "",
-    "## Objective (30s)",
+    "## Objective",
     "- Show approval-gated execution for funds operations.",
-    "- Flow: /policy swap -> CHALLENGE -> /approve -> txHash.",
+    "- Flow: /policy swap -> CHALLENGE -> /approve -> txHash",
     "",
-    "## Environment Check (30s)",
-    "- Verify plugin is loaded and challenge persistence is writable.",
-    "- Verify runtime dependencies are available.",
+    "## Environment check",
+    "- npm run wallet:check",
     "",
-    "## Main Flow (60s)",
-    "- Trigger challenge with /policy swap ...",
-    "- Approve once with /approve <challengeId> ...",
-    "- Confirm execution output includes txHash.",
-    "",
-    "## Key Talking Points (40s)",
-    "1. Funds intents are challenge-first by deterministic policy.",
-    "2. Idempotency blocks duplicate approval execution.",
-    "3. Success output is auditable through txHash.",
+    "## Offline reproducible flow",
+    `- POLICYGUARD_E2E_MOCK_TX_HASH=${mockTxHash} npm run e2e:swap-approval`,
   ];
-
   return lines.join("\n");
+}
+
+export function getDemoRunbook(): string {
+  return buildDemoRunbook();
 }

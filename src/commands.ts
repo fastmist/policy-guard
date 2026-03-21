@@ -26,6 +26,25 @@ export function parseCommandText(input: string): { command: string; args: string
   return { command, args: parts };
 }
 
+function parseAutoApprovalPolicyRequest(text: string): { maxAutoPerTx: number; maxAutoPerDay: number } | null {
+  const normalized = text.toLowerCase();
+  if (!/(authorize|allow|without confirmation|auto approve|免确认|授权)/i.test(normalized)) {
+    return null;
+  }
+
+  const txMatch = normalized.match(/(?:single|per\s*tx|单笔)\s*(?:<=|<|=|限额)?\s*([0-9]+(?:\.[0-9]+)?)\s*u?/i);
+  const dayMatch = normalized.match(/(?:daily|per\s*day|单日)\s*(?:<=|<|=|限额)?\s*([0-9]+(?:\.[0-9]+)?)\s*u?/i);
+
+  const maxAutoPerTx = txMatch ? Number(txMatch[1]) : NaN;
+  const maxAutoPerDay = dayMatch ? Number(dayMatch[1]) : NaN;
+
+  if (!Number.isFinite(maxAutoPerTx) || !Number.isFinite(maxAutoPerDay)) {
+    return null;
+  }
+
+  return { maxAutoPerTx, maxAutoPerDay };
+}
+
 export async function handleCommand(input: string, ctx: CommandContext): Promise<Record<string, unknown>> {
   const { command, args } = parseCommandText(input);
 
@@ -35,11 +54,38 @@ export async function handleCommand(input: string, ctx: CommandContext): Promise
       return { ok: false, error: "Usage: /policy <request text>" };
     }
 
-    const policy = evaluatePolicy(requestText);
+    const policyRequest = parseAutoApprovalPolicyRequest(requestText);
+    if (policyRequest) {
+      const applied = ctx.store.setAutoApprovalPolicy(policyRequest);
+      return {
+        ok: true,
+        decision: "PASS",
+        message: "Auto-approval policy updated.",
+        autoApprovalPolicy: applied,
+      };
+    }
+
+    const autoApprovalPolicy = ctx.store.getAutoApprovalPolicy();
+    const dailySpent = ctx.store.getDailySpent();
+    const policy = evaluatePolicy(requestText, { autoApprovalPolicy, dailySpent });
     if (policy.decision === "PASS") {
       const exec = policy.intent.nonFunds
         ? await ctx.adapter.executeNonFundsIntent(policy)
         : await ctx.adapter.executeApprovedChallenge(policy, "auto-approved-by-policy-pass");
+
+      if (!policy.intent.nonFunds && exec.ok) {
+        const rawAmount = policy.intent.entities.amount;
+        const amount =
+          typeof rawAmount === "number"
+            ? rawAmount
+            : typeof rawAmount === "string"
+              ? Number(rawAmount.replace(/u$/i, ""))
+              : NaN;
+        if (Number.isFinite(amount) && amount > 0) {
+          ctx.store.addDailySpent(amount);
+        }
+      }
+
       const txHash =
         exec.ok && typeof exec.details?.txHash === "string" && exec.details.txHash.length > 0
           ? exec.details.txHash

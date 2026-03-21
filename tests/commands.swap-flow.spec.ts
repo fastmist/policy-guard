@@ -7,6 +7,26 @@ import { PendingChallengeStore } from "../src/persistence.js";
 import { WdkAdapter } from "../src/wdk-adapter.js";
 import type { SwapExecutionInput } from "../src/wdk-adapter.js";
 
+function makeAutoPassAdapter() {
+  return new WdkAdapter(
+    { wdkSeedEnvKey: "__TEST_WDK_SEED__" },
+    async () => ({
+      available: true,
+      loaded: [
+        "@tetherto/wdk",
+        "@tetherto/wdk-wallet-evm",
+        "@tetherto/wdk-protocol-swap-velora-evm",
+      ],
+      missing: [],
+    }),
+    async (_input: SwapExecutionInput) => ({
+      txHash: "0xautopass123",
+      protocol: "velora",
+      meta: { source: "test-auto-pass" },
+    }),
+  );
+}
+
 describe("commands swap flow", () => {
   afterEach(() => {
     delete process.env.POLICYGUARD_AUTO_APPROVE_FUNDS;
@@ -107,5 +127,40 @@ describe("commands swap flow", () => {
     expect(out.status).toBe("APPROVED");
     expect(out.txHash).toBe("0xapprove123");
     expect(out.execution?.details?.txHash).toBe("0xapprove123");
+  });
+
+  test("policy authorization enables auto-pass for <=1U and daily <=10U", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "policyguard-test-"));
+    const store = new PendingChallengeStore(join(dir, "pending.json"));
+    const adapter = makeAutoPassAdapter();
+
+    const auth = await handleCommand(
+      "/policy authorize single <=1U without confirmation and daily <=10U",
+      { store, adapter },
+    );
+    expect(auth.ok).toBe(true);
+    expect(auth.decision).toBe("PASS");
+
+    const smallBuy = await handleCommand("/policy buy 0.8U USDC", { store, adapter });
+    expect(smallBuy.decision).toBe("PASS");
+
+    const bigBuy = await handleCommand("/policy buy 100U USDC", { store, adapter });
+    expect(bigBuy.decision).toBe("CHALLENGE");
+  });
+
+  test("daily limit is enforced after cumulative auto-pass", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "policyguard-test-"));
+    const store = new PendingChallengeStore(join(dir, "pending.json"));
+    const adapter = makeAutoPassAdapter();
+
+    await handleCommand("/policy authorize single <=1U without confirmation and daily <=10U", { store, adapter });
+
+    for (let i = 0; i < 10; i += 1) {
+      const out = await handleCommand("/policy buy 1U USDC", { store, adapter });
+      expect(out.decision).toBe("PASS");
+    }
+
+    const overLimit = await handleCommand("/policy buy 0.5U USDC", { store, adapter });
+    expect(overLimit.decision).toBe("CHALLENGE");
   });
 });

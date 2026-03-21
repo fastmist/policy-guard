@@ -10,19 +10,37 @@ const NON_FUNDS_PATTERNS: Array<{ name: string; re: RegExp }> = [
 
 const FUNDS_PATTERNS: Array<{ name: string; re: RegExp }> = [
   { name: "transfer", re: /\b(transfer|send|withdraw)\b/i },
-  { name: "swap", re: /\b(swap|exchange)\b/i },
+  { name: "swap", re: /\b(swap|exchange|buy|sell)\b/i },
   { name: "bridge", re: /\b(bridge)\b/i },
   { name: "approve", re: /\b(approve|allowance)\b/i },
 ];
 
+function normalizeAmountWithUSuffix(raw: string): string {
+  return raw.replace(/u$/i, "");
+}
+
 function extractSwapEntities(input: string): Record<string, string | number | boolean> {
-  const m = input.match(/swap\s+([0-9]+(?:\.[0-9]+)?)\s+([a-zA-Z0-9_]+)\s+(?:to|for)\s+([a-zA-Z0-9_]+)/i);
-  if (!m) return {};
-  return {
-    amount: m[1],
-    token_in: m[2].toUpperCase(),
-    token_out: m[3].toUpperCase(),
-  };
+  const canonical = input.match(/(?:swap|exchange)\s+([0-9]+(?:\.[0-9]+)?)([a-zA-Z]*)\s+([a-zA-Z0-9_]+)\s+(?:to|for)\s+([a-zA-Z0-9_]+)/i);
+  if (canonical) {
+    const mergedAmount = `${canonical[1]}${canonical[2] ?? ""}`;
+    return {
+      amount: normalizeAmountWithUSuffix(mergedAmount),
+      token_in: canonical[3].toUpperCase(),
+      token_out: canonical[4].toUpperCase(),
+    };
+  }
+
+  const buySell = input.match(/(?:buy|sell)\s+([0-9]+(?:\.[0-9]+)?)([a-zA-Z]*)\s+([a-zA-Z0-9_]+)/i);
+  if (buySell) {
+    const mergedAmount = `${buySell[1]}${buySell[2] ?? ""}`;
+    return {
+      amount: normalizeAmountWithUSuffix(mergedAmount),
+      token_in: buySell[3].toUpperCase(),
+      token_out: "USDT",
+    };
+  }
+
+  return {};
 }
 
 function normalizeTransferToken(raw?: string): string {

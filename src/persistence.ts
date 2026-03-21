@@ -1,11 +1,17 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import type { ChallengeRecord, PendingStore } from "./types.js";
+import type { AutoApprovalPolicy, ChallengeRecord, PendingStore } from "./types.js";
 
-const DEFAULT_STORE: PendingStore = {
-  version: 1,
-  challenges: [],
-};
+function createDefaultStore(): PendingStore {
+  return {
+    version: 1,
+    challenges: [],
+  };
+}
+
+function utcDateKey(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
 
 export class PendingChallengeStore {
   constructor(private readonly filePath: string) {
@@ -19,9 +25,9 @@ export class PendingChallengeStore {
       if (parsed?.version === 1 && Array.isArray(parsed.challenges)) {
         return parsed;
       }
-      return DEFAULT_STORE;
+      return createDefaultStore();
     } catch {
-      return DEFAULT_STORE;
+      return createDefaultStore();
     }
   }
 
@@ -45,5 +51,40 @@ export class PendingChallengeStore {
 
   getChallenge(id: string): ChallengeRecord | undefined {
     return this.load().challenges.find((x) => x.id === id);
+  }
+
+  setAutoApprovalPolicy(policy: { maxAutoPerTx: number; maxAutoPerDay: number; enabled?: boolean }): AutoApprovalPolicy {
+    const store = this.load();
+    const next: AutoApprovalPolicy = {
+      maxAutoPerTx: policy.maxAutoPerTx,
+      maxAutoPerDay: policy.maxAutoPerDay,
+      enabled: policy.enabled ?? true,
+      updatedAt: new Date().toISOString(),
+    };
+    store.autoApprovalPolicy = next;
+    this.save(store);
+    return next;
+  }
+
+  getAutoApprovalPolicy(): AutoApprovalPolicy | undefined {
+    return this.load().autoApprovalPolicy;
+  }
+
+  getDailySpent(date = utcDateKey()): number {
+    const store = this.load();
+    if (!store.dailySpent || store.dailySpent.date !== date) {
+      return 0;
+    }
+    return store.dailySpent.amount;
+  }
+
+  addDailySpent(amount: number, date = utcDateKey()): number {
+    const store = this.load();
+    if (!store.dailySpent || store.dailySpent.date !== date) {
+      store.dailySpent = { date, amount: 0 };
+    }
+    store.dailySpent.amount += amount;
+    this.save(store);
+    return store.dailySpent.amount;
   }
 }
