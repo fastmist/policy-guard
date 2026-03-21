@@ -1,0 +1,47 @@
+{
+  "name": "policyguard-openclaw-plugin",
+  "version": "0.1.0",
+  "description": "PolicyGuard MVP plugin for OpenClaw with deterministic policy challenges and WDK adapter scaffold",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "wallet:check": "npm run build && node dist/scripts/check-wallet-ready.js",
+    "demo:runbook": "npm run build && node dist/scripts/demo-runbook.js",
+    "tx:evidence": "npm run build && node dist/scripts/tx-evidence.js",
+    "validate": "npm run build && node dist/scripts/validate.js"
+  },
+  "keywords": [
+    "openclaw",
+    "policy",
+    "wdk",
+    "mvp"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tetherto/wdk": "*",
+    "@tetherto/wdk-wallet-evm": "*",
+    "@tetherto/wdk-protocol-swap-velora-evm": "*",
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ethers": "^6.16.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/src/index.js"
+    ]
+  }
+}

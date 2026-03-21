@@ -1,0 +1,13 @@
+{
+  "id": "policyguard-openclaw-plugin",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "persistencePath": { "type": "string" },
+      "wdkBaseUrl": { "type": "string" },
+      "wdkApiKey": { "type": "string" },
+      "wdkDryRun": { "type": "boolean" }
+    }
+  }
+}
