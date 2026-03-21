@@ -85,7 +85,7 @@ flowchart TD
     P -->|CHALLENGE| S[Challenge Store\npersist PENDING]
     S --> A[/approve challengeId/]
     A --> C
-    E --> TX[On-chain execution]\n
+    E --> TX[On-chain execution]
     TX --> R[Response\ndecision + txHash/error]
     C --> R
 ```
