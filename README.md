@@ -1,37 +1,73 @@
 # PolicyGuard OpenClaw Plugin
 
-PolicyGuard is an OpenClaw security plugin that enforces a deterministic approval boundary before funds-related actions execute.
+**PolicyGuard = WDK execution safety layer for OpenClaw.**  
+Integration path: `OpenClaw Tool -> PolicyGuard -> WDK -> Chain`
 
+This plugin enforces a deterministic approval boundary before funds-related actions execute:
 - `PASS`: safe/non-funds intent can proceed
 - `CHALLENGE`: funds intent requires explicit human approval
 
 ---
 
-## Quickstart (one command)
+## README Scoring Map (Criterion -> Evidence)
 
+| Scoring Criterion | Delivered Evidence in Repo | How to Verify Quickly |
+|---|---|---|
+| Problem relevance (AI agent fund safety) | README + `AWARD_PITCH.md` problem framing | Read first 2 sections |
+| Deterministic safety mechanism | `src/policy-engine.ts`, `src/commands.ts` | Run `/policy ...` and confirm `CHALLENGE` for funds intents |
+| Approval gating + idempotency | `src/commands.ts` challenge state transition | Approve same challenge twice and confirm duplicate approve is blocked |
+| WDK/OpenClaw integration implementation | `src/index.ts`, `src/wdk-adapter.ts`, `openclaw.plugin.json` | Install plugin and invoke `policyguard_command` |
+| Engineering quality | `tests/*`, `package.json` scripts | Run `npm run build && npm test && npm run validate` |
+
+---
+
+## Quickstart (aligned to demo user story)
+
+### a) Install `policyguard-openclaw-plugin`
 ```bash
 openclaw plugins install policyguard-openclaw-plugin
 ```
 
-`openclaw plugins install policyguard-openclaw-plugin@0.1.0` also works, but version is optional.
-If no version is specified, OpenClaw installs the package from the `latest` npm tag.
+(Version pin also works: `openclaw plugins install policyguard-openclaw-plugin@0.1.0`)
 
-Then set plugin config + environment, and restart/reload OpenClaw runtime as needed.
+### b) Create WDK wallet context
+Set the seed env key used by the plugin:
+```bash
+export WDK_SEED="<your mnemonic>"
+```
+
+Recommended plugin config:
+```json
+{
+  "plugins": {
+    "policyguard-openclaw-plugin": {
+      "persistencePath": "./data/pending-challenges.json",
+      "wdkSeedEnvKey": "WDK_SEED",
+      "chain": "arbitrum",
+      "accountIndex": 0,
+      "rpcUrl": "https://arb1.arbitrum.io/rpc",
+      "swapProtocolLabel": "velora",
+      "swapMaxFee": "0.003"
+    }
+  }
+}
+```
+
+### c) Let user transfer some ETH to Arbitrum mainnet
+Talk directly to OpenClaw in chat:
+1. `/policy transfer <amount> ETH to <address>`
+2. Receive `CHALLENGE` + `challengeId`
+3. `/approve <challengeId> <reason>`
+
+### d) Monitor hot on-chain tokens, analyze, then buy 1U
+Demo user story step (same conversation style):
+1. Ask OpenClaw to monitor hot tokens
+2. Ask OpenClaw to pick the best opportunity
+3. Execute buy with a 1U-sized action through policy challenge + approval flow
 
 ---
 
-## Why this plugin exists
-
-In AI-agent wallets, direct execution is dangerous. PolicyGuard introduces a strict guardrail:
-1. Parse intent
-2. Deterministically classify risk
-3. Require human approval for funds operations
-4. Execute through controlled adapter path
-5. Return auditable execution metadata (`txHash` when available)
-
----
-
-## Core architecture
+## Delivered architecture
 
 1. **Command layer** (`src/commands.ts`)
    - Handles `/policy`, `/approve`, `/reject`
@@ -53,7 +89,7 @@ In AI-agent wallets, direct execution is dangerous. PolicyGuard introduces a str
 
 ---
 
-## Technical highlights (expanded)
+## Delivered technical highlights
 
 - Deterministic policy boundary independent from model randomness
 - Idempotent challenge lifecycle to prevent duplicate execution
@@ -64,46 +100,14 @@ In AI-agent wallets, direct execution is dangerous. PolicyGuard introduces a str
 
 ---
 
-## Verifiable evidence model
+## Security constraints (implemented)
 
-What can be independently verified:
-- Funds intents produce `CHALLENGE`
-- Approval required before execution path
-- Challenge state persisted to `data/pending-challenges.json`
-- Successful on-chain execution returns `txHash`
-- Build/test/validation pipeline passes in repo
-
-> Demo-script section intentionally removed per current review direction.
-
----
-
-## Configuration
-
-Recommended plugin config:
-
-```json
-{
-  "plugins": {
-    "policyguard-openclaw-plugin": {
-      "persistencePath": "./data/pending-challenges.json",
-      "wdkSeedEnvKey": "WDK_SEED",
-      "chain": "arbitrum",
-      "accountIndex": 0,
-      "rpcUrl": "https://arb1.arbitrum.io/rpc",
-      "swapProtocolLabel": "velora",
-      "swapMaxFee": "0.003"
-    }
-  }
-}
-```
-
-Security constraints:
 - Seed-like plaintext keys in config are rejected at startup
 - Use environment variables for sensitive material only
 
 ---
 
-## Local development
+## Local verification
 
 ```bash
 npm install
