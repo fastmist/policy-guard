@@ -1,6 +1,6 @@
 {
   "name": "policyguard-openclaw-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "PolicyGuard MVP plugin for OpenClaw with deterministic policy challenges and WDK adapter scaffold",
   "type": "module",
   "main": "dist/src/index.js",
