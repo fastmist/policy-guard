@@ -134,5 +134,5 @@ What each layer contributes:
 
 ---
 
-Reference narrative: `AWARD_PITCH.md`  
+Reference narrative: `doc/AWARD_PITCH.md`  
 Hackathon rules context: https://hcni4f4mdq79.feishu.cn/wiki/LVzIwMpmKixXeHkeQQ0c8sn8nWg
