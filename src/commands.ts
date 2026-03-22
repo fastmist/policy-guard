@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { evaluatePolicy } from "./policy-engine.js";
 import { PendingChallengeStore } from "./persistence.js";
 import { WdkAdapter } from "./wdk-adapter.js";
@@ -11,7 +12,8 @@ export type CommandContext = {
 function challengeFromPolicy(policy: PolicyEvaluation): ChallengeRecord {
   const now = new Date().toISOString();
   return {
-    id: policy.requestId,
+    id: randomUUID(),
+    requestId: policy.requestId,
     status: "PENDING",
     createdAt: now,
     updatedAt: now,

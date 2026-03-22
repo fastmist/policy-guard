@@ -8,6 +8,7 @@ import type { ChallengeRecord } from "../src/types.js";
 function sampleChallenge(id: string): ChallengeRecord {
   return {
     id,
+    requestId: `req-${id}`,
     status: "PENDING",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -45,5 +46,24 @@ describe("persistence state", () => {
     store.upsertChallenge(c);
 
     expect(store.getChallenge("same-id")?.status).toBe("APPROVED");
+  });
+
+  test("preserves multiple challenge instances for same policy request id", () => {
+    const dir = mkdtempSync(join(tmpdir(), "policyguard-test-"));
+    const store = new PendingChallengeStore(join(dir, "pending.json"));
+
+    const first = sampleChallenge("instance-1");
+    first.requestId = "same-policy-request";
+    first.policy.requestId = "same-policy-request";
+    first.status = "APPROVED";
+    store.upsertChallenge(first);
+
+    const second = sampleChallenge("instance-2");
+    second.requestId = "same-policy-request";
+    second.policy.requestId = "same-policy-request";
+    store.upsertChallenge(second);
+
+    expect(store.getChallenge("instance-1")?.status).toBe("APPROVED");
+    expect(store.getChallenge("instance-2")?.status).toBe("PENDING");
   });
 });
