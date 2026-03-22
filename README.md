@@ -1,4 +1,4 @@
-# PolicyGuard = WDK safety layer for OpenClaw
+# PolicyGuard: WDK safety layer for OpenClaw
 
 ## Problem
 In AI-agent trading/wallet workflows, the core risk is not model intelligence but uncontrolled fund operations.
