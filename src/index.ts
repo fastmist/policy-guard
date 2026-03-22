@@ -4,6 +4,16 @@ import { handleCommand } from "./commands.js";
 import { PendingChallengeStore } from "./persistence.js";
 import { WdkAdapter } from "./wdk-adapter.js";
 
+// Helper to serialize BigInt values in JSON
+function safeJsonStringify(value: unknown, space?: number): string {
+  return JSON.stringify(value, (_key, val) => {
+    if (typeof val === "bigint") {
+      return val.toString();
+    }
+    return val;
+  }, space);
+}
+
 type PluginConfig = {
   persistencePath?: string;
   /** @deprecated */
@@ -38,11 +48,11 @@ const plugin = {
       apiKey: cfg.wdkApiKey,
       wdkDryRun: cfg.wdkDryRun,
       wdkSeedEnvKey: cfg.wdkSeedEnvKey,
-      chain: cfg.chain,
-      accountIndex: cfg.accountIndex,
-      rpcUrl: cfg.rpcUrl,
-      swapProtocolLabel: cfg.swapProtocolLabel,
-      swapMaxFee: cfg.swapMaxFee,
+      chain: cfg.chain ?? "arbitrum",
+      accountIndex: cfg.accountIndex ?? 0,
+      rpcUrl: cfg.rpcUrl ?? "https://arb-mainnet.g.alchemy.com/v2/iTkG2ozJHEuvvo1hPOwYB",
+      swapProtocolLabel: cfg.swapProtocolLabel ?? "velora",
+      swapMaxFee: cfg.swapMaxFee ?? "0.01",
     });
 
     api.registerTool({
@@ -65,7 +75,7 @@ const plugin = {
 
         if (!command.trim()) {
           const output = { ok: false, error: "Missing command" };
-          return { output, details: output, isError: true, content: [{ type: "text", text: JSON.stringify(output) }] };
+          return { output, details: output, isError: true, content: [{ type: "text", text: safeJsonStringify(output) }] };
         }
 
         const result = await handleCommand(command, { store, adapter });
@@ -73,7 +83,7 @@ const plugin = {
           output: result,
           details: result,
           isError: result.ok === false,
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: safeJsonStringify(result, 2) }],
         };
       },
     });

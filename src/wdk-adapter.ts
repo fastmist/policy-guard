@@ -989,14 +989,11 @@ export function createWdkSwapExecutor(loader: SwapProtocolLoader): SwapExecutor 
 }
 
 const loadSwapProtocolModule: SwapProtocolLoader = async () => {
-  const dynamicImport = new Function("specifier", "return import(specifier)") as (
-    specifier: string,
-  ) => Promise<SwapProtocolModule>;
-
+  // Use native ES module dynamic import instead of new Function
   const [protocolModule, wdkModule, walletModule] = await Promise.all([
-    dynamicImport("@tetherto/wdk-protocol-swap-velora-evm"),
-    dynamicImport("@tetherto/wdk"),
-    dynamicImport("@tetherto/wdk-wallet-evm"),
+    import("@tetherto/wdk-protocol-swap-velora-evm"),
+    import("@tetherto/wdk"),
+    import("@tetherto/wdk-wallet-evm"),
   ]);
 
   return {
