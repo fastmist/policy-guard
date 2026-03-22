@@ -20,6 +20,7 @@ export type ChallengeStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export type ChallengeRecord = {
   id: string;
+  requestId: string;
   status: ChallengeStatus;
   createdAt: string;
   updatedAt: string;

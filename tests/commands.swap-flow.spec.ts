@@ -163,4 +163,26 @@ describe("commands swap flow", () => {
     const overLimit = await handleCommand("/policy buy 0.5U USDC", { store, adapter });
     expect(overLimit.decision).toBe("CHALLENGE");
   });
+
+  test("same /policy text twice creates two different challenge instances", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "policyguard-test-"));
+    const store = new PendingChallengeStore(join(dir, "pending.json"));
+    const adapter = new WdkAdapter({});
+
+    const first = await handleCommand("/policy swap 1 usdt to usdc", { store, adapter });
+    const firstId = String(first.challengeId);
+    expect(first.decision).toBe("CHALLENGE");
+
+    const approveFirst = await handleCommand(`/approve ${firstId} first approval`, { store, adapter });
+    expect(approveFirst.ok).toBe(true);
+    expect(store.getChallenge(firstId)?.status).toBe("APPROVED");
+
+    const second = await handleCommand("/policy swap 1 usdt to usdc", { store, adapter });
+    const secondId = String(second.challengeId);
+    expect(second.decision).toBe("CHALLENGE");
+    expect(secondId).not.toBe(firstId);
+
+    expect(store.getChallenge(firstId)?.status).toBe("APPROVED");
+    expect(store.getChallenge(secondId)?.status).toBe("PENDING");
+  });
 });

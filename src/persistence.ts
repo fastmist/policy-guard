@@ -23,6 +23,10 @@ export class PendingChallengeStore {
       const raw = readFileSync(this.filePath, "utf8");
       const parsed = JSON.parse(raw) as PendingStore;
       if (parsed?.version === 1 && Array.isArray(parsed.challenges)) {
+        parsed.challenges = parsed.challenges.map((challenge) => ({
+          ...challenge,
+          requestId: challenge.requestId ?? challenge.policy?.requestId ?? challenge.id,
+        }));
         return parsed;
       }
       return createDefaultStore();
@@ -39,14 +43,18 @@ export class PendingChallengeStore {
 
   upsertChallenge(challenge: ChallengeRecord): ChallengeRecord {
     const store = this.load();
+    const normalized: ChallengeRecord = {
+      ...challenge,
+      requestId: challenge.requestId || challenge.policy.requestId,
+    };
     const existingIdx = store.challenges.findIndex((x) => x.id === challenge.id);
     if (existingIdx >= 0) {
-      store.challenges[existingIdx] = challenge;
+      store.challenges[existingIdx] = normalized;
     } else {
-      store.challenges.push(challenge);
+      store.challenges.push(normalized);
     }
     this.save(store);
-    return challenge;
+    return normalized;
   }
 
   getChallenge(id: string): ChallengeRecord | undefined {
