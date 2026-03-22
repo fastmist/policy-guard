@@ -32,44 +32,9 @@ Typical failure modes:
 
 ## Quickstart
 
-Install plugin from npm (latest):
-```bash
-openclaw plugins install policyguard-openclaw-plugin
-```
+Chat with your OpenClaw: openclaw plugins install policyguard-openclaw-plugin
 
-Optional version pin:
-```bash
-openclaw plugins install policyguard-openclaw-plugin@0.1.1
-```
-
-Set runtime seed env:
-```bash
-export WDK_SEED="<your mnemonic>"
-```
-
-Recommended plugin config:
-```json
-{
-  "plugins": {
-    "policyguard-openclaw-plugin": {
-      "persistencePath": "./data/pending-challenges.json",
-      "wdkSeedEnvKey": "WDK_SEED",
-      "chain": "arbitrum",
-      "accountIndex": 0,
-      "rpcUrl": "https://arb1.arbitrum.io/rpc",
-      "swapProtocolLabel": "velora",
-      "swapMaxFee": "0.003"
-    }
-  }
-}
-```
-
-Sanity checks:
-```bash
-npm run build
-npm test
-npm run validate
-```
+Follow [demo video](https://youtu.be/ar5vIzSBbBU), or explore on your own. It support token transfer and swap integrated with WDK.
 
 ## Tech Details
 
@@ -131,9 +96,3 @@ What each layer contributes:
 - **Policy**: risk decisioning and quota checks
 - **State**: durable audit and quota continuity across sessions
 - **Execution**: controlled WDK execution and observable output contract
-
----
-
-Reference narrative: `doc/AWARD_PITCH.md`  
-Hackathon rules reference in repo: `doc/HACKATHON_RULES.md`  
-Official rules link: https://hcni4f4mdq79.feishu.cn/wiki/LVzIwMpmKixXeHkeQQ0c8sn8nWg
